@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ruiwang.younthpalace.mapper.platform.EquipmentInfMapper">
+	<resultMap id="sysEquipmentPosition" type="com.ruiwang.younthpalace.entity.platform.SysEquipmentPosition">
+		<id column="id" property="id"></id>
+		<result column="describe" property="describe"></result>
+		<result column="belongs_to" property="belongsTo"></result>
+	</resultMap>
+	<resultMap id="sysEquipmentType" type="com.ruiwang.younthpalace.entity.platform.SysEquipmentType">
+		<id column="id" property="id"></id>
+		<result column="describe" property="describe"></result>
+	</resultMap>
+	<resultMap id="sysEquipmentSys" type="com.ruiwang.younthpalace.entity.platform.SysEquipmentSys">
+		<id column="id" property="id"></id>
+		<result column="esys_name" property="esysName"></result>
+		<result column="esys_code" property="esysCode"></result>
+		<result column="esys_desc" property="esysDesc"></result>
+	</resultMap>
+	<resultMap id="sysEquipmentInf" type="com.ruiwang.younthpalace.entity.platform.SysEquipmentInfo">
+		<id column="id" property="id"></id>
+		<result column="equipment_name" property="equipmentName"></result>
+		<result column="equipment_type_id" property="equipmentTypeId"></result>
+		<result column="equipment_code" property="equipmentCode"></result>
+		<result column="equipment_position_id" property="equipmentPositionId"></result>
+		<result column="installation_date" property="installationDate"></result>
+		<result column="supplier" property="supplier"></result>
+		<result column="life" property="life"></result>
+		<result column="maintenance_provider" property="maintenanceProvider"></result>
+		<result column="belong_to" property="belongTo"></result>
+		<result column="equipment_sys_id" property="equipmentSysId"></result>
+
+	</resultMap>
+	<resultMap id="poEquipmentInfMainyenance" type="com.ruiwang.younthpalace.pojo.platform.PoEquipmentInfMainyenance">
+		<id column="id" property="id"></id>
+		<result column="equipment_position_id" property="equipment_position_id"></result>
+		<result column="describe" property="equipment_des"></result>
+	</resultMap>
+	<resultMap id="boEquipmentInf" type="com.ruiwang.younthpalace.bojo.platform.BoEquipmentInf">
+		<id column="id" property="id"></id>
+		<result column="equipment_name" property="equipment_name"></result>
+		<result column="equipment_position_id" property="equipment_position_id"></result>
+		<result column="equipment_position_des" property="equipment_position_des"></result>
+		<result column="equipment_sys_code" property="equipment_sys_code"></result>
+		<result column="equipment_sys_Name" property="equipment_sys_Name"></result>
+		<result column="equipment_sys_desc" property="equipment_sys_desc"></result>
+	</resultMap>
+
+
+	<select id="selectEquipmentTypes" resultMap="sysEquipmentType">
+		select * from `equipment_type`;
+	</select>
+	<insert id="insertIntoEquipmentInf">
+		INSERT INTO `equipment_info`
+			(`equipment_name`, `equipment_type_id`, `equipment_code`, `equipment_position_id`, `installation_date`, `life`, `supplier`, `maintenance_provider`, `belong_to`,equipment_sys_id)
+				VALUES(#{boEquipmentInfAdd.equipmentName},
+									#{boEquipmentInfAdd.equipmentTypeId},
+									#{boEquipmentInfAdd.equipmentCode},
+									#{boEquipmentInfAdd.equipmentPositionId},
+									#{boEquipmentInfAdd.installationDate},
+									#{boEquipmentInfAdd.life},
+									#{boEquipmentInfAdd.supplier},
+									#{boEquipmentInfAdd.maintenanceProvider},
+									#{boEquipmentInfAdd.belongTo},
+									#{boEquipmentInfAdd.equipmentSysId})
+
+	</insert>
+	<select id="selectEquipmentSysById" resultMap="sysEquipmentSys">
+		select * from equipment_sys
+		 <where>
+			 <if test="id!=null and id!=0">
+				  id=#{id}
+			 </if>
+		 </where>
+
+	</select>
+	<select id="selectEquipmentCountByCode" resultType="java.lang.Integer">
+		select count(1) from equipment_sys
+		<where>
+			<if test="equipmentCode!=null and equipmentCode!=''">
+				equiment_code=#{equipmentCode}
+			</if>
+		</where>
+	</select>
+
+<!--	<insert id="insertIntoEquipmentInfAll">-->
+<!--		insert into `equipmentinf` (-->
+<!--			`equipment_name`, `equipment_type_id`, `equipment_code`, `equipment_position_id`, `installation_date`, `life`, `supplier`, `maintenance_provider`, `belong_to`-->
+<!--		) values(-->
+<!--					#{listInf[0]},-->
+<!--					#{listInf[1]},-->
+<!--					#{listInf[2]},-->
+<!--					#{list3},-->
+<!--					#{listInf[4]},-->
+<!--					#{listInf[5]},-->
+<!--					#{list6},-->
+<!--					#{listInf[7]},-->
+<!--					#{listInf[8]},-->
+<!--					#{listInf[9]},-->
+<!--					#{listInf[10]},-->
+<!--					#{position}-->
+<!--				)-->
+<!--	</insert>-->
+	<select id="selectEquipmentList" resultMap="boEquipmentInf">
+		SELECT * from (
+			select ei.*,
+			es.esys_code equipment_sys_code,
+			es.esys_name equipment_sys_Name,
+			 es.esys_desc equipment_sys_desc from (
+			select * from equipment_info where 1=1
+			<if test="boEquipmentInfLimit.equipment_name!=null &amp;&amp; boEquipmentInfLimit.equipment_name!=''">
+				and ei.equipment_name like concat('%',#{boEquipmentInfLimit.equipment_name},'%')
+			</if>
+			) ei LEFT JOIN equipment_sys es on ei.equipment_sys_id=es.id
+		) data
+		limit #{boEquipmentInfLimit.pageNum},#{boEquipmentInfLimit.pageSize};
+	</select>
+	<select id="selectEquipmentSysList" resultMap="sysEquipmentSys">
+		select * from equipment_sys
+	</select>
+	<select id="selectEquipmentListAll" resultType="java.lang.Integer">
+		select count(1) from equipment_info
+		where 1=1
+		<if test="boEquipmentInfLimit.equipment_name!=null &amp;&amp; boEquipmentInfLimit.equipment_name!=''">
+			and ei.equipment_name like concat('%',#{boEquipmentInfLimit.equipment_name},'%')
+		</if>
+	</select>
+	<select id="selectSysEquipmentInfByid" resultMap="sysEquipmentInf">
+		select * from equipment_info where id=#{id}
+	</select>
+
+	<select id="getPosition" resultType="java.lang.String">
+		select CONCAT(b.`describe`,'-',a.`describe`) from equipment_position a INNER JOIN equipment_position b on a.belongs_to=b.id
+		where a.id=#{state_id}
+	</select>
+	<update id="updateEquipmentInf">
+		update `equipment_info` set
+			equipment_type_id=#{boEquipmentInfAdd.equipmentTypeId},
+			equipment_code=#{boEquipmentInfAdd.equipmentCode},
+			equipment_position_id=#{boEquipmentInfAdd.equipmentPositionId},
+			installation_date=#{boEquipmentInfAdd.installationDate},
+			life=#{boEquipmentInfAdd.life},
+			supplier=#{boEquipmentInfAdd.supplier},
+			maintenance_provider=#{boEquipmentInfAdd.maintenanceProvider},
+			belong_to=#{boEquipmentInfAdd.belongTo},
+			equipment_sys_id=#{boEquipmentInfAdd.equipmentSysId}
+		where id=#{boEquipmentInfAdd.id}
+	</update>
+	<delete id="deleteequipmentInf">
+		delete from equipment_info where id=#{id}
+	</delete>
+	<select id="selectBoMaintenanceEquipmentInf" resultMap="poEquipmentInfMainyenance">
+		select need.id,equipment_position_id,et.`describe`  from(select * from equipment_info where equipment_code=#{equipment_num} limit 1) need left join equipment_type et on need.equipment_type_id=et.id
+	</select>
+
+ </mapper>

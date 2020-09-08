@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ruiwang.younthpalace.mapper.map.EditPageInfoMapper">
+    <resultMap id="sysEditPageInf" type="com.ruiwang.younthpalace.entity.map.SysEditPageInfo">
+		<id column="id" property="id" />
+		<result column="content" property="content" />
+	</resultMap>
+	<update id="updateEditPageInf">
+		update edit_page_info set content=#{content} where id=1
+	</update>
+	<update id="updateIconInf">
+		update edit_page_info set content=#{content} where id=2
+	</update>
+	<select id="allEditPageInf" resultMap="sysEditPageInf">
+		select * from edit_page_info
+	</select>
+	<select id="selectEditPageInf" resultMap="sysEditPageInf">
+		select * from edit_page_info where id=#{id}
+	</select>
+
+ </mapper>

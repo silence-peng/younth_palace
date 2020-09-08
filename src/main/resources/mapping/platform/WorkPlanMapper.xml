@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ruiwang.younthpalace.mapper.platform.WorkPlanMapper">
+	<resultMap id="boWorkPlan" type="com.ruiwang.younthpalace.bojo.platform.BoWorkPlan">
+		<id column="id" property="id"></id>
+		<result column="create_time" property="createTime"></result>
+		<result column="equipment_code" property="equipmentCode"></result>
+		<result column="describe" property="equipmentType"></result>
+		<result column="cuser_name" property="createUserName"></result>
+		<result column="duser_name" property="doUserName"></result>
+		<result column="state" property="state"></result>
+		<result column="start_time" property="startTime"></result>
+		<result column="equipment_position_id" property="equipment_position_id"></result>
+	</resultMap>
+
+	<insert id="insertIntoWorkPlan">
+		insert into work_plan (
+								   equipment_id,
+								   create_time,
+								   reason,
+								   create_userId,
+								   do_userId,
+								   start_time,
+								   state
+		                       )values
+								(
+									#{sysWorkPlan.equipmentInf_id},
+									#{sysWorkPlan.create_time},
+									#{sysWorkPlan.reason},
+									#{sysWorkPlan.create_userId},
+									#{sysWorkPlan.executor},
+									#{sysWorkPlan.start_time},
+									0
+								)
+	</insert>
+
+	<update id="updateWorkPlan">
+		update work_plan set do_userId=#{sysWorkPlan.executor},reason=#{sysWorkPlan.reason},start_time=#{sysWorkPlan.start_time} where id=#{sysWorkPlan.id}
+	</update>
+
+	<select id="selectBoWorkPlanList" resultMap="boWorkPlan">
+		SELECT edtailu.*,uo.user_name duser_name from
+		(select edtail.*,u.user_name cuser_name from
+		(select wpa.*,et.`describe` from
+		(select wp.*,eq.equipment_code,eq.equipment_type_id,equipment_position_id from work_plan wp LEFT JOIN equipment_info eq on wp.equipment_id=eq.id
+		where 1=1
+		<if test="boWorkPlanLimit.createTime!=null&amp;&amp;boWorkPlanLimit.createTime!=''">
+			AND create_time like concat('%',#{boWorkPlanLimit.createTime}.'%')
+		</if>
+		<if test="boWorkPlanLimit.equipmentNum!=null&amp;&amp;boWorkPlanLimit.equipmentNum!=''">
+			AND equipment_num like concat('%',#{boWorkPlanLimit.equipmentNum}.'%')
+		</if>
+
+		) wpa
+		LEFT JOIN equipment_type et on wpa.equipment_type_id=et.id) edtail
+		LEFT JOIN `user` u on edtail.create_userId=u.id) edtailu
+		LEFT JOIN `user` uo on edtailu.do_userId=uo.id
+		limit #{boWorkPlanLimit.pageNum},#{boWorkPlanLimit.pageSize};
+	</select>
+
+	<select id="selectBoWorkPlanListAllNum" resultType="java.lang.Integer">
+		SELECT count(1) from
+		(select edtail.*,u.user_name cuser_name from
+		(select wpa.*,et.`describe` from
+		(select wp.*,eq.equipment_code,eq.equipment_type_id,equipment_position_id from work_plan wp LEFT JOIN equipment_info eq on wp.equipment_id=eq.id
+		where 1=1
+		<if test="boWorkPlanLimit.createTime!=null&amp;&amp;boWorkPlanLimit.createTime!=''">
+			AND create_time like concat('%',#{boWorkPlanLimit.createTime}.'%')
+		</if>
+		<if test="boWorkPlanLimit.equipmentNum!=null&amp;&amp;boWorkPlanLimit.equipmentNum!=''">
+			AND equipment_num like concat('%',#{boWorkPlanLimit.equipmentNum}.'%')
+		</if>
+
+		) wpa
+		LEFT JOIN equipment_type et on wpa.equipment_type_id=et.id) edtail
+		LEFT JOIN `user` u on edtail.create_userId=u.id) edtailu
+		LEFT JOIN `user` uo on edtailu.do_userId=uo.id
+	</select>
+
+	<select id="selectworkPlan" resultMap="boWorkPlan">
+		SELECT edtailu.*,uo.user_name duser_name from
+		(select edtail.*,u.user_name cuser_name from
+			(select wpa.*,et.`describe` from
+				(select wp.*,eq.equipment_code,eq.equipment_type_id,equipment_position_id from work_plan wp LEFT JOIN equipment_info eq on wp.equipment_id=eq.id
+				 where wp.id=#{id}) wpa
+					LEFT JOIN equipment_type et on wpa.equipment_type_id=et.id) edtail
+				LEFT JOIN `user` u on edtail.create_userId=u.id) edtailu
+			LEFT JOIN `user` uo on edtailu.do_userId=uo.id
+	</select>
+
+	<delete id="deleteWorkPlan">
+		delete from work_plan where id=#{id}
+	</delete>
+
+	<update id="doWorkPlan">
+		update work_plan set state=1 where id=#{id}
+	</update>
+ </mapper>

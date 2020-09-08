@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ruiwang.younthpalace.mapper.power.HandoverMapper">
+    <resultMap id="boOrder" type="com.ruiwang.younthpalace.bojo.power.BoOrder">
+        <id column="id" property="id" />
+        <result column="department_id" property="departmentId" />
+        <result column="do_user" property="sendUser" />
+        <result column="content_list" property="contentList" />
+        <result column="content" property="content" />
+        <result column="to_user" property="toUser" />
+        <result column="send_time" property="sendTime" />
+        <result column="get_time" property="getTime" />
+        <result column="create_time" property="createTime" />
+        <result column="departmentName" property="departmentName" />
+        <result column="order_user" property="orderUser" />
+    </resultMap>
+    <resultMap id="sysOrder" type="com.ruiwang.younthpalace.entity.power.SysOrder">
+        <id column="id" property="id" />
+        <result column="department_id" property="departmentId" />
+        <result column="do_user" property="doUser" />
+        <result column="content_list" property="contentList" />
+        <result column="content" property="content" />
+        <result column="to_user" property="toUser" />
+        <result column="send_time" property="sendTime" />
+        <result column="get_time" property="getTime" />
+        <result column="create_time" property="createTime" />
+        <result column="order_user" property="orderUser" />
+    </resultMap>
+    <resultMap id="boShiftManagementInf" type="com.ruiwang.younthpalace.bojo.power.BoShiftManagementInf">
+        <id column="id" property="id" />
+        <result column="date" property="date" />
+        <result column="user_id" property="user_id" />
+        <result column="do_time" property="do_time" />
+        <result column="phone" property="phone" />
+        <result column="user_name" property="user_name" />
+        <result column="department_id" property="department_id" />
+        <result column="department_name" property="department_name" />
+    </resultMap>
+
+    <resultMap id="sysShiftmanagement" type="com.ruiwang.younthpalace.entity.power.SysShiftmanagement">
+        <id column="id" property="id" />
+        <result column="date" property="date" />
+        <result column="user_id" property="user_id" />
+        <result column="do_time" property="do_time" />
+    </resultMap>
+
+    <select id="selectBoOrderList" resultMap="boOrder">
+        select h.*,d.department_name departmentName from handover h left JOIN department d on h.department_id=d.id
+        where 1=1
+            <if test="orderLimit.departmentId!=null&amp;&amp;orderLimit.departmentId!=-1">
+                AND h.department_id=#{orderLimit.departmentId}
+            </if>
+            <if test="orderLimit.startTimeHour!=null&amp;&amp;orderLimit.startTimeHour!=''">
+                AND (h.send_time&gt;=#{orderLimit.startTimeHour} AND h.get_time&lt;=#{orderLimit.endTimeHour})
+                or (h.get_time&gt;=#{orderLimit.startTimeHour} AND h.get_time&lt;=#{orderLimit.endTimeHour})
+            </if>
+            <if test="orderLimit.createTime!=''&amp;&amp;orderLimit.createTime!=null">
+                AND h.create_time like concat('%',#{orderLimit.createTime},'%')
+            </if>
+            <if test="orderLimit.orderUser!=''">
+                AND h.order_user like concat('%',#{orderLimit.orderUser},'%')
+            </if>
+        limit #{orderLimit.pageNum},#{orderLimit.pageSize}
+    </select>
+
+    <select id="selectBoOrderListAll" resultType="java.lang.Integer">
+        select count(1) from handover h left JOIN department d on h.department_id=d.id
+        where 1=1
+            <if test="orderLimit.departmentId!=null&amp;&amp;orderLimit.departmentId!=-1">
+                AND h.department_id=#{orderLimit.departmentId}
+            </if>
+            <if test="orderLimit.startTimeHour!=null&amp;&amp;orderLimit.startTimeHour!=''">
+                AND (h.send_time&gt;=#{orderLimit.startTimeHour} AND h.get_time&lt;=#{orderLimit.endTimeHour})
+                or (h.get_time&gt;=#{orderLimit.startTimeHour} AND h.get_time&lt;=#{orderLimit.endTimeHour})
+            </if>
+            <if test="orderLimit.createTime!=''&amp;&amp;orderLimit.createTime!=null">
+                AND h.create_time like concat('%',#{orderLimit.createTime},'%');
+            </if>
+            <if test="orderLimit.orderUser!=''">
+                AND h.order_user like concat('%',#{orderLimit.orderUser},'%');
+            </if>
+    </select>
+
+    <insert id="insertIntoOrder">
+        insert into `handover`  (`department_id`,`do_user`,`content_list`,`content`,`to_user`,`send_time`,`get_time`,`create_time`,`order_user`)
+        values (
+            #{sysOrder.departmentId},
+            #{sysOrder.doUser},
+            #{sysOrder.contentList},
+            #{sysOrder.content},
+            #{sysOrder.toUser},
+            #{sysOrder.sendTime},
+            #{sysOrder.getTime},
+            #{sysOrder.createTime},
+            #{sysOrder.orderUser}
+        )
+    </insert>
+
+    <update id="updateSysOrderById">
+        update `handover` set
+                              `department_id`=#{sysOrder.departmentId},
+                              `do_user`=#{sysOrder.doUser},
+                              `content_list`=#{sysOrder.contentList},
+                              `content`=#{sysOrder.content},
+                              `to_user`=#{sysOrder.toUser},
+                              `send_time`=#{sysOrder.sendTime},
+                              `get_time`=#{sysOrder.getTime},
+                              `create_time`=#{sysOrder.createTime},
+                              `order_user`=#{sysOrder.orderUser}
+      where id=#{sysOrder.id};
+    </update>
+    <select id="selectSysOrderById" resultMap="sysOrder">
+        select * from `handover` where id=#{id};
+    </select>
+    <delete id="deleteSysOrderById">
+        delete from `handover` where id=#{id};
+    </delete>
+
+    <insert id="shiftmanagementAdd">
+        insert into shiftmanagement (`date`,`user_id`,`do_time`)
+        values(
+               #{sysShiftmanagement.date},
+               #{sysShiftmanagement.user_id},
+               #{sysShiftmanagement.do_time}
+               )
+    </insert>
+
+
+    <select id="selectshiftManagementAll" resultType="java.lang.Integer">
+        SELECT
+            count(1)
+        FROM
+            (
+                SELECT
+                    smu.*, ud.department_id
+                FROM
+                    (
+                        SELECT
+                            sm.*, u.phone,
+                            u.user_name
+                        FROM
+                            shiftmanagement sm
+                                LEFT JOIN USER u ON sm.user_id = u.id
+                            where 1=1
+                            <if test="shiftManagementLimit.date!=''&amp;&amp;shiftManagementLimit.date!=null">
+                               And date=#{shiftManagementLimit.date}
+                            </if>
+                            <if test="shiftManagementLimit.user_name!=''&amp;&amp;shiftManagementLimit.user_name!=null">
+                                And user_name=#{shiftManagementLimit.user_name}
+                            </if>
+                    ) smu
+                        LEFT JOIN user_department ud ON smu.user_id = ud.user_id
+            ) allInf
+                LEFT JOIN department d ON allInf.department_id = d.id;
+                <if test="shiftManagementLimit.department_id!=''&amp;&amp;shiftManagementLimit.department_id!=null">
+                    where department_id=#{shiftManagementLimit.department_id}
+                </if>
+    </select>
+    <select id="selectshiftManagementList" resultMap="boShiftManagementInf">
+        SELECT
+        allInf.*, d.department_name
+        FROM
+        (
+        SELECT
+        smu.*, ud.department_id
+        FROM
+        (
+        SELECT
+        sm.*, u.phone,
+        u.user_name
+        FROM
+        shiftmanagement sm
+        LEFT JOIN USER u ON sm.user_id = u.id
+        where 1=1
+        <if test="shiftManagementLimit.date!=''&amp;&amp;shiftManagementLimit.date!=null">
+            And date=#{shiftManagementLimit.date}
+        </if>
+        <if test="shiftManagementLimit.user_name!=''&amp;&amp;shiftManagementLimit.user_name!=null">
+            And user_name=#{shiftManagementLimit.user_name}
+        </if>
+        ) smu
+        LEFT JOIN user_department ud ON smu.user_id = ud.user_id
+        ) allInf
+        LEFT JOIN department d ON allInf.department_id = d.id
+        <if test="shiftManagementLimit.department_id!=''&amp;&amp;shiftManagementLimit.department_id!=null">
+            where department_id=#{shiftManagementLimit.department_id}
+        </if>
+        limit #{shiftManagementLimit.pageNum},10
+    </select>
+
+    <select id="getSysShiftmanagement" resultMap="boShiftManagementInf">
+        SELECT
+        allInf.*, d.department_name
+        FROM
+        (
+        SELECT
+        smu.*, ud.department_id
+        FROM
+        (
+        SELECT
+        sm.*, u.phone,
+        u.user_name
+        FROM
+        shiftmanagement sm
+        LEFT JOIN USER u ON sm.user_id = u.id
+          where sm.id=#{id}
+        ) smu
+        LEFT JOIN user_department ud ON smu.user_id = ud.user_id
+        ) allInf
+        LEFT JOIN department d ON allInf.department_id = d.id
+    </select>
+
+    <update id="updateSysShiftmanagement">
+        update shiftmanagement set `date`=#{sysShiftmanagement.date},
+                                   `user_id`=#{sysShiftmanagement.user_id},
+                                   `do_time`=#{sysShiftmanagement.do_time}
+                              where id=#{id};
+    </update>
+    <delete id="deleteShift">
+        delete from shiftmanagement where id=#{id};
+    </delete>
+</mapper>

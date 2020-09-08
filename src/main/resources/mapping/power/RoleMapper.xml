@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ruiwang.younthpalace.mapper.power.RoleMapper">
+    <resultMap id="sysRole" type="com.ruiwang.younthpalace.entity.power.SysRole">
+		<id column="id" property="id" />
+		<result column="role_name" property="roleName" />
+		<result column="note" property="note" />
+	</resultMap>
+	<resultMap id="boRole" type="com.ruiwang.younthpalace.bojo.power.BoRole">
+		<id column="id" property="id" />
+		<result column="role_name" property="roleName" />
+		<result column="note" property="note" />
+		<result column="role_count" property="roleCount" />
+	</resultMap>
+
+
+	<select id="selectRoleAll" resultMap="sysRole">
+		select * from role;
+	</select>
+
+	<select id="selectRoleListNum" resultType="java.lang.Integer">
+		select count(*) from role where 1=1
+			<!--<if test="roleLimit.date!=''">-->
+				<!--AND role_date&gt;=#{roleLimit.dateStart}-->
+				<!--AND role_date&lt;=#{roleLimit.dateEnd}-->
+			<!--</if>-->
+			<if test="roleLimit.roleName!=''">
+				AND role_name like concat('%',#{roleLimit.roleName},'%')
+			</if>
+			<if test="roleLimit.note!=''">
+				AND note like concat('%',#{roleLimit.note},'%')
+			</if>
+
+	</select>
+
+	<select id="selectRoleList" resultMap="boRole">
+		select r.*,ru.role_count from role r LEFT JOIN (SELECT role_id,count(1) role_count from `user` GROUP BY  role_id) ru on r.id=ru.role_id
+			<!--<if test="roleLimit.date!=''">-->
+				<!--AND role_date&gt;=#{roleLimit.dateStart}-->
+				<!--AND role_date&lt;=#{roleLimit.dateEnd}-->
+			<!--</if>-->
+			<if test="roleLimit.roleName!=''">
+				AND role_name like concat('%',#{roleLimit.roleName},'%')
+			</if>
+			<if test="roleLimit.note!=''">
+				AND note like concat('%',#{roleLimit.note},'%')
+			</if>
+
+		limit #{roleLimit.pageNum},#{roleLimit.pageSize};
+	</select>
+
+	<select id="selectRoleByroleName" resultType="java.lang.Integer">
+		SELECT count(1) from role where role_name=#{roleName};
+	</select>
+
+	<insert id="insertIntoRole">
+		insert into role (role_name,note) values (#{roleName},#{roleNote});
+	</insert>
+
+	<delete id="deleteRoleById">
+		delete from role where id=#{roleId}
+	</delete>
+
+	<update id="updateRole">
+		update role set role_name=#{roleName},note=#{roleNote} where id=#{id}
+	</update>
+ </mapper>

@@ -1,0 +1,292 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ruiwang.younthpalace.mapper.platform.MaintenanceMapper">
+	<resultMap id="sysMaintenance" type="com.ruiwang.younthpalace.entity.platform.SysMaintenance">
+		<id column="id" property="id"></id>
+		<result column="equipmentInf_id" property="equipmentInf_id"></result>
+		<result column="start_time" property="start_time"></result>
+		<result column="end_time" property="end_time"></result>
+		<result column="maintenance_cycle" property="maintenance_cycle"></result>
+		<result column="executor" property="executor"></result>
+		<result column="last_scan_time" property="last_scan_time"></result>
+	</resultMap>
+	<resultMap id="boMaintenanceInf" type="com.ruiwang.younthpalace.bojo.platform.BoMaintenanceInf">
+		<id column="id" property="id"></id>
+		<result column="equipment_code" property="equipment_code"></result>
+		<result column="equipment_type" property="equipment_type"></result>
+		<result column="equipment_position_id" property="equipment_position_id"></result>
+		<result column="start_time" property="start_time"></result>
+		<result column="end_time" property="end_time"></result>
+		<result column="maintenance_cycle" property="maintenance_cycle"></result>
+		<result column="user_name" property="user_name"></result>
+		<result column="executor" property="executor"></result>
+		<result column="role_name" property="role_name"></result>
+		<result column="phone" property="phone"></result>
+		<result column="state" property="state"></result>
+	</resultMap>
+	<resultMap id="boMaintenanceHisInf" type="com.ruiwang.younthpalace.bojo.platform.BoMaintenanceHisInf">
+		<id column="id" property="id"></id>
+		<result column="equipment_code" property="equipment_code"></result>
+		<result column="equipment_type" property="equipment_type"></result>
+		<result column="equipment_position_id" property="equipment_position_id"></result>
+		<result column="maintenance_cycle" property="maintenance_cycle"></result>
+		<result column="planId" property="planId"></result>
+	</resultMap>
+	<select id="selectMaintenance_planByEquipmentInfId" resultType="java.lang.Integer">
+		select count(1) from `maintenance_plan` where equipmentInf_id=#{eid};
+	</select>
+	<insert id="insertIntoMaintenance_plan">
+		insert into `maintenance_plan`
+		  (`equipmentInf_id`,`start_time`,`end_time`,`maintenance_cycle`,`executor`,`last_scan_time`)
+		  values
+		  (#{Inf.equipmentInf_id},#{Inf.start_time},#{Inf.end_time},#{Inf.maintenance_cycle},#{Inf.executor},#{Inf.last_scan_time});
+	</insert>
+	<select id="selectLastid" resultType="java.lang.Integer">
+		SELECT max(id) from `maintenance_plan`;
+	</select>
+	<insert id="insertIntoMaintenance_his">
+		insert into `maintenance_his`
+			(`plan_id`,`executor`,`state`)
+			values
+			(#{id},#{Inf.executor},0);
+	</insert>
+	<select id="selectChangePlanHis" resultType="java.lang.Integer">
+		select id from
+		(select * from maintenance_plan where
+		(end_time&gt;=#{time} and start_time&lt;#{time})
+		or (end_time is null and start_time&lt;#{time})
+		or (end_time&gt;=#{time} and start_time is null)
+		or (end_time is null and start_time is null)
+		GROUP BY id having DATE_FORMAT(DATE_SUB(last_scan_time,INTERVAL executor DAY),'%Y-%m-%d')&lt;#{time})
+		allInf
+	</select>
+
+	<select id="selecthas" resultType="java.lang.Integer">
+		select plan_id from maintenance_his where state=0
+		<choose>
+			<when test="idList.size()!=0">
+				And plan_id in
+				<foreach item="item" index="index" collection="idList" open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</when>
+			<otherwise>
+				And plan_id=-1;
+			</otherwise>
+		</choose>
+
+	</select>
+	<select id="selectNeedAddPlanById" resultMap="sysMaintenance">
+		select * from maintenance_plan where 1=1
+		 <choose>
+			<when test="idList.size()!=0">
+				And id in
+				<foreach item="item" index="index" collection="idList" open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</when>
+			<otherwise>
+				And id=-1;
+			</otherwise>
+		</choose>
+	</select>
+	<select id="selectBomainTenanceInfs" resultMap="boMaintenanceInf">
+		select mud.*,role.role_name from
+			(select * from
+				(select maintenancedetail.*,u.id uid,u.user_name,u.phone from
+					(select mp.*,detail.equipment_code,detail.equipment_position_id,detail.equipment_type from maintenance_plan mp LEFT JOIN
+						(select equ.*,et.`describe` equipment_type from equipment_info equ LEFT JOIN equipment_type et on equ.equipment_type_id=et.id) detail on mp.equipmentInf_id=detail.id
+						-- 这里是查询条件
+							where 1=1
+								<if test="boMaintenancePlanLimit.equipment_num!=''">
+									AND `equipment_code`=#{boMaintenancePlanLimit.equipment_num}
+								</if>
+								<if test="boMaintenancePlanLimit.equipment_type!=-1&amp;&amp;boMaintenancePlanLimit.equipment_type!=null">
+									AND `equipment_type_id`=#{boMaintenancePlanLimit.equipment_type}
+								</if>
+
+								<if test="boMaintenancePlanLimit.start_time!=null&amp;&amp;boMaintenancePlanLimit.end_time==null">
+									And `start_time`&gt;=#{boMaintenancePlanLimit.start_time}
+								</if>
+								<if test="boMaintenancePlanLimit.start_time==null&amp;&amp;boMaintenancePlanLimit.end_time!=null">
+									And `end_time`&lt;=#{boMaintenancePlanLimit.end_time}
+								</if>
+								<if test="boMaintenancePlanLimit.start_time!=null&amp;&amp;boMaintenancePlanLimit.end_time!=null">
+									And `end_time`&lt;=#{boMaintenancePlanLimit.end_time}
+									And `start_time`&gt;=#{boMaintenancePlanLimit.start_time}
+								</if>
+					) maintenancedetail LEFT JOIN user u on maintenancedetail.executor=u.id
+				) mdetail LEFT JOIN user_role ur on mdetail.uid=ur.user_id
+			  )
+			  mud LEFT JOIN role on mud.role_id=role.id
+				limit #{boMaintenancePlanLimit.pageNum},#{boMaintenancePlanLimit.pageSize};
+	</select>
+	<select id="selectBomainTenanceInfsNum" resultType="java.lang.Integer">
+		select count(1) from maintenance_plan mp LEFT JOIN
+		 (
+			 select equ.*,et.`describe` equipment_type from equipment_info equ LEFT JOIN equipment_type et on equ.equipment_type_id=et.id
+		 ) detail on mp.equipmentInf_id=detail.id
+			where 1=1
+				<if test="boMaintenancePlanLimit.equipment_num!=''">
+					AND `equipment_num`=#{boMaintenancePlanLimit.equipment_num}
+				</if>
+				<if test="boMaintenancePlanLimit.equipment_type!=-1&amp;&amp;boMaintenancePlanLimit.equipment_type!=null">
+					AND `equipment_type_id`=#{boMaintenancePlanLimit.equipment_type}
+				</if>
+
+				<if test="boMaintenancePlanLimit.start_time!=null&amp;&amp;boMaintenancePlanLimit.end_time==null">
+					And `start_time`&gt;=#{boMaintenancePlanLimit.start_time}
+				</if>
+				<if test="boMaintenancePlanLimit.start_time==null&amp;&amp;boMaintenancePlanLimit.end_time!=null">
+					And `end_time`&lt;=#{boMaintenancePlanLimit.end_time}
+				</if>
+				<if test="boMaintenancePlanLimit.start_time!=null&amp;&amp;boMaintenancePlanLimit.end_time!=null">
+					And `end_time`&lt;=#{boMaintenancePlanLimit.end_time}
+					And `start_time`&gt;=#{boMaintenancePlanLimit.start_time}
+				</if>
+	</select>
+	<select id="selectMaintenanceStateByPlanId" resultType="java.lang.Integer">
+		select state from maintenance_his where plan_id=#{planId}  ORDER BY id desc limit 1
+	</select>
+	
+	<delete id="deleteMaintenance">
+		delete from maintenance_plan where id=#{id};
+	</delete>
+	<delete id="deleteMaintenance_his_doing">
+		delete from maintenance_his where plan_id=#{plan_id} and state=0;
+	</delete>
+
+	<select id="selectMaintanceInfById" resultMap="boMaintenanceInf">
+		select allInf.*,et.`describe` equipment_type from
+			(select burdInf.*,e.equipment_position_id,e.equipment_type_id,e.equipment_code from
+			(select burInf.*,r.role_name from
+			(select * from
+			(select baseInf.*,u.user_name,u.phone from
+			(select * from maintenance_plan where id=#{id}) baseInf
+			 left join user u on baseInf.executor=u.id) baseuInf
+			 left join user_role ur on baseuInf.executor=ur.user_id) burInf
+			 left join role r on burInf.role_id=r.id) burdInf
+			 left join equipment_info e on burdInf.equipmentInf_id=e.id) allInf
+			 left join equipment_type et on allInf.equipment_type_id=et.id
+	</select>
+	<update id="updateMaintenance">
+		update maintenance_plan set
+			  `start_time`=#{inf.start_time},
+		      `end_time`=#{inf.end_time},
+			  `maintenance_cycle`=#{inf.maintenance_cycle},
+			  `executor`=#{inf.executor}
+		where id=#{inf.id}
+	</update>
+	<select id="selectBoMaintenanceHisInf" resultMap="boMaintenanceHisInf">
+		select basee.*,et.`describe` equipment_type from
+		(select basep.*,e.id planId,e.equipment_position_id,e.equipment_code,e.equipment_type_id from
+		(select base.*,mp.equipmentInf_id ,mp.end_time from
+		(select * from maintenance_his where state=#{boMaintenancePlanLimit.state}
+		  <choose>
+			  <when test="boMaintenancePlanLimit.userId!=null">
+				  AND executor=#{boMaintenancePlanLimit.userId}
+			  </when>
+		  </choose>
+		) base
+		LEFT JOIN maintenance_plan mp on base.plan_id=mp.id
+		) basep
+		LEFT JOIN equipment_info e on basep.equipmentInf_id=e.id
+		where 1=1
+			<if test="boMaintenancePlanLimit.equipment_num!=''">
+				AND `equipment_num`=#{boMaintenancePlanLimit.equipment_num}
+			</if>
+			<if test="boMaintenancePlanLimit.equipment_type!=-1&amp;&amp;boMaintenancePlanLimit.equipment_type!=null">
+				AND `equipment_type_id`=#{boMaintenancePlanLimit.equipment_type}
+			</if>
+			<if test="boMaintenancePlanLimit.building!=-1&amp;&amp;boMaintenancePlanLimit.building!=null">
+				<choose>
+					<when test="boMaintenancePlanLimit.floor==-1||boMaintenancePlanLimit.floor==null">
+						AND `equipment_position_id` in (select id from equipment_position where belongs_to=#{boMaintenancePlanLimit.building})
+					</when>
+					<otherwise>
+						AND `equipment_position_id`=#{boMaintenancePlanLimit.floor}
+					</otherwise>
+				</choose>
+			</if>
+			<if test="boMaintenancePlanLimit.start_time!=null&amp;&amp;boMaintenancePlanLimit.end_time==null">
+				And `start_time`&gt;=#{boMaintenancePlanLimit.start_time}
+			</if>
+			<if test="boMaintenancePlanLimit.start_time==null&amp;&amp;boMaintenancePlanLimit.end_time!=null">
+				And `end_time`&lt;=#{boMaintenancePlanLimit.end_time}
+			</if>
+			<if test="boMaintenancePlanLimit.start_time!=null&amp;&amp;boMaintenancePlanLimit.end_time!=null">
+				And `end_time`&lt;=#{boMaintenancePlanLimit.end_time}
+				And `start_time`&gt;=#{boMaintenancePlanLimit.start_time}
+			</if>
+	    ) basee
+		LEFT JOIN equipment_type et on basee.equipment_type_id=et.id
+		limit #{boMaintenancePlanLimit.pageNum},10;
+	</select>
+	<select id="selectBoMaintenanceHisInfNum" resultType="java.lang.Integer">
+		select count(1) from
+		(select basep.*,e.id planId,e.equipment_position_id,e.equipment_num,e.equipment_type_id from
+		(select base.*,mp.equipmentInf_id ,mp.end_time from
+		(select * from maintenance_his where state=#{boMaintenancePlanLimit.state}
+		  <choose>
+			  <when test="boMaintenancePlanLimit.userId!=null">
+				  AND executor=#{boMaintenancePlanLimit.userId}
+			  </when>
+		  </choose>
+		) base
+		LEFT JOIN maintenance_plan mp on base.plan_id=mp.id
+		) basep
+		LEFT JOIN equipment_info e on basep.equipmentInf_id=e.id
+		where 1=1
+			<if test="boMaintenancePlanLimit.equipment_num!=''">
+				AND `equipment_num`=#{boMaintenancePlanLimit.equipment_num}
+			</if>
+			<if test="boMaintenancePlanLimit.equipment_type!=-1&amp;&amp;boMaintenancePlanLimit.equipment_type!=null">
+				AND `equipment_type_id`=#{boMaintenancePlanLimit.equipment_type}
+			</if>
+			<if test="boMaintenancePlanLimit.building!=-1&amp;&amp;boMaintenancePlanLimit.building!=null">
+				<choose>
+					<when test="boMaintenancePlanLimit.floor==-1||boMaintenancePlanLimit.floor==null">
+						AND `equipment_position_id` in (select id from equipment_position where belongs_to=#{boMaintenancePlanLimit.building})
+					</when>
+					<otherwise>
+						AND `equipment_position_id`=#{boMaintenancePlanLimit.floor}
+					</otherwise>
+				</choose>
+			</if>
+			<if test="boMaintenancePlanLimit.start_time!=null&amp;&amp;boMaintenancePlanLimit.end_time==null">
+				And `start_time`&gt;=#{boMaintenancePlanLimit.start_time}
+			</if>
+			<if test="boMaintenancePlanLimit.start_time==null&amp;&amp;boMaintenancePlanLimit.end_time!=null">
+				And `end_time`&lt;=#{boMaintenancePlanLimit.end_time}
+			</if>
+			<if test="boMaintenancePlanLimit.start_time!=null&amp;&amp;boMaintenancePlanLimit.end_time!=null">
+				And `end_time`&lt;=#{boMaintenancePlanLimit.end_time}
+				And `start_time`&gt;=#{boMaintenancePlanLimit.start_time}
+			</if>
+	    ) basee
+		LEFT JOIN equipment_type et on basee.equipment_type_id=et.id
+	</select>
+	<update id="updatemaintenanceHis">
+		update maintenance_his set `state`=1,`do_date`=#{dotime},`file`=#{file},`des`=#{des} where id=#{id}
+	</update>
+	<update id="updatemaintenancePlan">
+		update maintenance_plan set `last_scan_time`=#{dotime} where id=#{id}
+	</update>
+	<select id="selectMaintanceInfhisById" resultMap="boMaintenanceInf">
+		select allinf.*,etype.describe equipment_type from
+			(select baseall.*,eq.equipment_code,eq.equipment_position_id,eq.equipment_type_id from
+				(select basemrd.*,u.phone,u.user_name from
+					(select basemr.*,r.role_name from
+						(select * from
+							(select base.*,mp.equipmentInf_id,mp.maintenance_cycle from
+									(select * from maintenance_his where id=#{id})
+									base LEFT JOIN maintenance_plan mp on base.plan_id=mp.id)
+								basem LEFT JOIN user_role ur on basem.executor=ur.user_id) basemr
+							LEFT JOIN role r on basemr.role_id=r.id) basemrd
+						LEFT JOIN user u on basemrd.executor=u.id) baseall
+					LEFT JOIN equipment_info eq on baseall.equipmentInf_id=eq.id) allinf
+				left join equipment_type etype on allinf.equipment_type_id=etype.id
+	</select>
+ </mapper>

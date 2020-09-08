@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ruiwang.younthpalace.mapper.power.MenuMapper">
+	<resultMap id="sysMenu" type="com.ruiwang.younthpalace.entity.power.SysMenu">
+		<id column="id" property="id"></id>
+		<result column="menu_name" property="menu_name"></result>
+		<result column="belongs_to" property="belongsto"></result>
+	</resultMap>
+	<resultMap id="sysPos" type="com.ruiwang.younthpalace.entity.power.SysPosition">
+		<id column="id" property="id"></id>
+		<result column="describe" property="describe"></result>
+		<result column="belongs_to" property="belongsto"></result>
+	</resultMap>
+	<resultMap id="boMenu" type="com.ruiwang.younthpalace.bojo.power.BoMenu">
+		<id column="id" property="id"></id>
+		<result column="name" property="name"></result>
+	</resultMap>
+	<select id="selectSysMenu" resultMap="sysMenu">
+		select * from menu ;
+	</select>
+	<select id="selectMenuchild" resultMap="sysMenu">
+		select * from menu where belongsto=#{id};
+	</select>
+	<select id="getUserMenu" resultMap="sysMenu">
+		select * from menu where id in(select menu_id from user_menu where user_id=#{userId});
+	</select>
+	<delete id="deleteUserMenu">
+		delete from user_menu where user_id=#{userId};
+	</delete>
+	<insert id="insertIntoUserMenu">
+		insert into user_menu (user_id,menu_id) values(#{userId},#{menuId})
+	</insert>
+
+	<select id="selectPosList" resultMap="sysPos">
+		select * from equipment_position;
+	</select>
+	<select id="getUserPos" resultMap="sysPos">
+		select * from equipment_position where id in(select position_id from user_position where user_id=#{userId});
+	</select>
+	<delete id="deleteUserPos">
+		delete from user_position where user_id=#{userId};
+	</delete>
+	<insert id="insertIntoUserPos">
+		insert into user_position (user_id,position_id) values(#{userId},#{positionId})
+	</insert>
+
+	<select id="getRoleMenu" resultMap="sysMenu">
+		select * from menu where id in(select menu_id from role_menu where role_id=#{roleId});
+	</select>
+
+	<delete id="deleteRoleMenu">
+		delete from role_menu where role_id=#{roleId};
+	</delete>
+
+	<insert id="insertIntoRoleMenu">
+		insert into role_menu (role_id,menu_id) values(#{roleId},#{menuId})
+	</insert>
+
+	<select id="getRolePos" resultMap="sysPos">
+		select * from equipment_position where id in(select position_id from role_position where role_id=#{roleId});
+	</select>
+
+	<delete id="deleteRolePos">
+		delete from role_position where role_id=#{roleId};
+	</delete>
+	<insert id="insertIntoRolePos">
+		insert into role_position (role_id,position_id) values(#{roleId},#{positionId})
+	</insert>
+ </mapper>

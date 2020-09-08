@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ruiwang.younthpalace.mapper.power.DepartmentMapper">
+    <resultMap id="sysDepartment" type="com.ruiwang.younthpalace.entity.power.SysDepartment">
+		<id column="id" property="id" />
+		<result column="department_name" property="departmentName" />
+		<result column="department_date" property="departmentDate" />
+	</resultMap>
+
+	<select id="selectDepartmentAll" resultMap="sysDepartment">
+		select * from department;
+	</select>
+	<select id="selectDepartmentListNum" resultType="java.lang.Integer">
+		select count(*) from department where 1=1
+		<if test="departmentLimit.date!=null and departmentLimit.date!=''">
+			AND department_date&gt;=#{departmentLimit.dateStart}
+			AND department_date&lt;=#{departmentLimit.dateEnd}
+		</if>
+		<if test="departmentLimit.departmentName!=null and departmentLimit.departmentName!=''">
+			AND department_name like concat('%',#{departmentLimit.departmentName},'%')
+		</if>
+
+	</select>
+
+	<select id="selectDepartmentList" resultMap="sysDepartment">
+		select * from department where 1=1
+		<if test="departmentLimit.date!=null and departmentLimit.date!=''">
+			AND department_date&gt;=#{departmentLimit.dateStart}
+			AND department_date&lt;=#{departmentLimit.dateEnd}
+		</if>
+		<if test="departmentLimit.departmentName!=null and departmentLimit.departmentName!=''">
+			AND department_name like concat('%',#{departmentLimit.departmentName},'%')
+		</if>
+
+		limit #{departmentLimit.pageNum},#{departmentLimit.pageSize};
+	</select>
+
+	<select id="selectDepartmentByName" resultType="java.lang.Integer">
+		select count(1) from department where department_name=#{departmentName}
+	</select>
+
+	<insert id="insertDepartment">
+		insert into department (department_name,department_date) values (#{departmentName},#{time})
+ 	</insert>
+
+	<delete id="deleteDepartmentById">
+		delete from department where id=#{departmentId}
+	</delete>
+
+	<update id="updateDepartment">
+		update department set department_name=#{departmentName} where id=#{departmentId}
+	</update>
+ </mapper>

@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ruiwang.younthpalace.mapper.power.UserMapper">
+    <resultMap id="sysUser" type="com.ruiwang.younthpalace.entity.power.SysUser">
+		<id column="id" property="id" />
+		<result column="user_name" property="userName" />
+		<result column="user_password" property="userPassword" />
+		<result column="user_name_cn" property="userNameCn" />
+		<result column="gender" property="gender" />
+		<result column="entry_date" property="entryDate" />
+		<result column="phone" property="phone" />
+		<result column="state" property="state" />
+		<result column="post" property="post" />
+		<result column="email" property="email" />
+	</resultMap>
+	<resultMap id="boUser" type="com.ruiwang.younthpalace.bojo.power.BoUser">
+		<id column="id" property="id" />
+		<result column="user_name" property="userName" />
+		<result column="user_password" property="userPassword" />
+		<result column="user_name_cn" property="userNameCn" />
+		<result column="gender" property="gender" />
+		<result column="entry_date" property="entryDate" />
+		<result column="phone" property="phone" />
+		<result column="state" property="state" />
+		<result column="post" property="post" />
+		<result column="email" property="email" />
+		<result column="department_name" property="departmentName" />
+		<result column="departmentId" property="departmentId" />
+		<result column="createtime" property="createtime" />
+	</resultMap>
+
+	<resultMap id="poUserDepartment" type="com.ruiwang.younthpalace.pojo.power.PoUserDepartment">
+		<id column="id" property="id" />
+		<result column="user_name" property="userName" />
+		<result column="phone" property="phone" />
+		<result column="department_name" property="departmentName"/>
+	</resultMap>
+	<resultMap id="poUserRole" type="com.ruiwang.younthpalace.pojo.power.PoUserRole">
+		<id column="id" property="id" />
+		<result column="user_name" property="userName" />
+		<result column="phone" property="phone" />
+		<result column="role_name" property="roleName"/>
+	</resultMap>
+	<!--人员查询条件sql-->
+	<sql id="condition_sql">
+
+			<if test="userLimit.date!=''">
+				AND entry_date&gt;=#{userLimit.dateStart}
+				AND entry_date&lt;=#{userLimit.dateEnd}
+			</if>
+			<if test="userLimit.departmentId!=null&amp;&amp;userLimit.departmentId!=-1">
+				AND udl.department_id=#{userLimit.departmentId}
+			</if>
+			<if test="userLimit.post!=''">
+				AND post like concat('%',#{userLimit.post},'%')
+			</if>
+			<if test="userLimit.userNameCn!=''">
+				AND user_name_cn like concat('%',#{userLimit.userNameCn},'%')
+			</if>
+			<if test="userLimit.userName!=''">
+				AND user_name like concat('%',#{userLimit.userName},'%')
+			</if>
+
+	</sql>
+	<select id="selectByUserName" resultMap="sysUser">
+		select * from user where user_name=#{userName}
+	</select>
+
+	<select id="selectBoUserList" resultMap="boUser">
+		select udl.*,d.id departmentId,d.department_name from
+		(select u.*,ud.department_id from (select u.id,
+		u.user_name,
+		u.user_password,
+		u.user_name_cn,
+		u.gender,
+		u.entry_date,
+		u.phone,
+		u.state,
+		u.role_id
+		from user u where u.id!=9) u LEFT JOIN user_department ud on u.id=ud.user_id) udl
+		left join department d on udl.department_id=d.id
+		where 1=1
+		<include refid="condition_sql"/>
+		limit #{userLimit.pageNum},#{userLimit.pageSize};
+	</select>
+	<select id="selectBoUserListAll" resultType="java.lang.Integer">
+		select count(1) from
+		(select u.*,ud.department_id from (select u.id,
+		u.user_name,
+		u.user_password,
+		u.user_name_cn,
+		u.gender,
+		u.entry_date,
+		u.phone,
+		u.state,
+		u.role_id
+		from user u where u.id!=9) u LEFT JOIN user_department ud on u.id=ud.user_id) udl
+		left join department d on udl.department_id=d.id
+		where 1=1
+		<include refid="condition_sql"/>
+	</select>
+
+	<insert id="insertIntoUser">
+		<selectKey resultType="java.lang.Integer" order="AFTER" keyProperty="id">
+			SELECT LAST_INSERT_ID()
+		</selectKey>
+		insert into `user` (`user_name`,`user_password`,`user_name_cn`,`gender`,`entry_date`,`phone`,`state`,`email`,`post`,`createtime`,`department_id`,`role_id`)
+		values (#{boUser.userName},
+		        #{boUser.userPassword},
+		        #{boUser.userNameCn},
+		        #{boUser.gender},
+		        #{boUser.entryDate},
+		        #{boUser.phone},
+				1,
+				#{boUser.email},
+				#{boUser.post},
+		        #{boUser.createtime}),
+		        #{boUser.department_id},
+		       	#{boUser.role_id};
+	</insert>
+	<select id="selectNearInf" resultType="java.lang.Integer">
+		select id from user where id != 9 order by createtime desc limit 1;
+	</select>
+	<insert id="insertIntoUserDepartment">
+		insert into `user_department` (`user_id`,`department_id`) values (#{userId},#{departmentId});
+	</insert>
+
+	<insert id="insertIntoUserRole">
+		insert into `user_role` (`user_id`,`role_id`) values (#{userId},#{roleId});
+	</insert>
+	<delete id="deleteUserByUserId">
+		delete from `user` where id=#{userId} and id !=9;
+	</delete>
+
+	<select id="selectBoUserById" resultMap="boUser">
+		select urall.*,role.role_name roleName,role.note from
+			(select udall.*,ur.role_id roleId from
+				(
+		select udl.*,d.id departmentId,d.department_name from
+					(select u.* from (select * from user where id!=9)  u LEFT JOIN user_department ud on u.id=ud.user_id) udl
+						left join department d on udl.department_id=d.id
+		) udall
+					left join user_role ur on udall.id=ur.user_id) urall
+				LEFT JOIN role on urall.roleId=role.id
+		where urall.id=#{userId}
+	</select>
+	<update id="updateUser">
+		update user set `user_name`=#{boUser.userName},
+		                `user_password`=#{boUser.userPassword},
+		                `user_name_cn`=#{boUser.userNameCn},
+		                `gender`=#{boUser.gender},
+		                `entry_date`=#{boUser.entryDate},
+		                `phone`=#{boUser.phone},
+		                `state`=#{boUser.state},
+		                `email`=#{boUser.email},
+		                `post`=#{boUser.post}
+		where `id`=#{boUser.id} and id!=9;
+	</update>
+	<update id="updateUserDepartment">
+		update user_department set `department_id`=#{departmentId} where `user_id`=#{userId} and user_id!=9
+	</update>
+	<delete id="deleteUserDepartment">
+		delete from user_department where user_id=#{userId} and user_id!=9;
+	</delete>
+	<update id="updateUserRole">
+		update user_role set `role_id`=#{roleId} where `user_id`=#{userId} and user_id!=9
+	</update>
+	<delete id="deleteUserRole">
+		delete from user_role where user_id=#{userId} and user_id!=9;
+	</delete>
+
+	<update id="updateUserState">
+		update user set state=#{state} where id=#{userId} and id!=9
+	</update>
+
+	<select id="selectStateByUserId" resultType="java.lang.Integer">
+		select state from user where id=#{userId} and id!=9;
+	</select>
+
+	<select id="getUserMenu" resultType="java.lang.String">
+		select menu_id from user_menu where user_id=#{userId} and user_id!=9
+	</select>
+
+	<select id="getUserPosition" resultType="java.lang.String">
+		select position_id from user_position where user_id=#{userId} and user_id!=9
+	</select>
+
+	<select id="selectPoUserDepartment" resultMap="poUserDepartment">
+		select nud.*,d.department_name from (select need.*,ud.department_id from (select id,user_name,phone from user where user_name=#{userName} and id!=9) need LEFT JOIN user_department ud on need.id=ud.user_id) nud left join department d on nud.department_id=d.id
+	</select>
+
+	<select id="selectPoUserRole" resultMap="poUserRole">
+		select nud.*,r.role_name from (
+		  select need.*,ud.role_id from (
+				select id,user_name,phone from user where user_name=#{userName} and id!=9) need
+				LEFT JOIN user_role ud on need.id=ud.user_id) nud
+		LEFT JOIN  role r on nud.role_id=r.id
+	</select>
+</mapper>

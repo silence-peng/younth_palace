@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ruiwang.younthpalace.mapper.platform.CalendarMapper">
+	<resultMap id="boCalendarPageSet" type="com.ruiwang.younthpalace.bojo.platform.BoCalendarPageSet">
+		<result column="showWeather" property="showWeather"></result>
+		<result column="showPlan" property="showPlan"></result>
+		<result column="showErrorNum" property="showErrorNum"></result>
+	</resultMap>
+	<resultMap id="sysCalendar" type="com.ruiwang.younthpalace.entity.platform.SysCalendar">
+		<id column="id" property="id"></id>
+		<result column="weather" property="weather"></result>
+		<result column="plan" property="plan"></result>
+		<result column="date" property="date"></result>
+		<result column="errNum" property="errNum"></result>
+	</resultMap>
+	<select id="selectPageSet" resultMap="boCalendarPageSet">
+		select * from calendar_pageset;
+	</select>
+
+	<update id="updatePageSet">
+		  update calendar_pageset set showWeather=#{weatherchoose},showPlan=#{planchoose},showErrorNum=#{errchoose}
+	</update>
+
+	<update id="updateweatherFuture">
+		update calendar_future set inf=#{inf}
+	</update>
+
+	<select id="selectDayInf" resultType="java.lang.Integer">
+		select count(1) from calendar_inf where date=#{date}
+	</select>
+	<update id="updateCalendarInf">
+		update calendar_inf set weather=#{weather} where date=#{date}
+	</update>
+	<insert id="insertCalendarInf">
+		insert into calendar_inf (weather,date) values(#{weather},#{date})
+	</insert>
+	<select id="selectSyscalendar" resultMap="sysCalendar">
+		select * from calendar_inf where `date` in
+		<foreach item="item" index="index" collection="dateA" open="(" separator="," close=")">
+			#{item}
+		</foreach>
+	</select>
+	<select id="selectFuture" resultType="java.lang.String">
+		select * from calendar_future;
+	</select>
+
+	<insert id="insertCalendarPlan">
+		insert into calendar_inf (plan,date) values (#{plan},#{date})
+	</insert>
+
+	<update id="updateCalendarPlan">
+		update calendar_inf set plan=#{plan} where date=#{date}
+	</update>
+	<select id="selectCalendarInfByDate" resultMap="sysCalendar">
+		select * from calendar_inf where date=#{date}
+	</select>
+ </mapper>

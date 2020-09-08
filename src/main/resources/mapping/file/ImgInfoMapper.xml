@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ruiwang.younthpalace.mapper.file.ImgInfoMapper">
+	<resultMap id="sysImgInf" type="com.ruiwang.younthpalace.entity.file.SysImgInfo">
+		<id column="id" property="id"></id>
+		<result column="img_url" property="imgUrl"></result>
+		<result column="type" property="type"></result>
+		<result column="desc_name" property="descName"></result>
+	</resultMap>
+
+	<select id="allImg" resultMap="sysImgInf">
+		select * from img_info
+	</select>
+	<select id="selectImgInf" resultMap="sysImgInf">
+		select * from img_info where 1=1
+		<choose>
+			<when test="sysImgInfo.id!=null">
+				and id=#{sysImgInfo.id}
+			</when>
+			<otherwise>
+				<if test="sysImgInfo.type!=null">
+					and type=#{sysImgInfo.type}
+				</if>
+
+				<if test="sysImgInfo.imgUrl!=null">
+					and img_url like concat('%',#{sysImgInfo.imgUrl},'%')
+				</if>
+				<if test="sysImgInfo.groupType!=null">
+					and group_type =#{sysImgInfo.imgUrl}
+				</if>
+				<if test="sysImgInfo.descName!=null">
+					and desc_name =#{sysImgInfo.descName}
+				</if>
+			</otherwise>
+		</choose>
+	</select>
+	<insert id="addImgInf" parameterType="com.ruiwang.younthpalace.entity.file.SysImgInfo">
+		insert into img_info (img_url,`type`,desc_name,group_type)
+		values(#{sysImgInfo.imgUrl},#{sysImgInfo.type},#{sysImgInfo.descName},#{sysImgInfo.groupType})
+	</insert>
+
+	<select id="selectImgInfByIds" resultMap="sysImgInf">
+		select * from img_info where id in
+		<foreach item="item" index="index" collection="ids" open="(" separator="," close=")">
+			#{item}
+		</foreach>
+	</select>
+	<delete id="deleteImgInf">
+		delete from img_info where id in
+		<foreach item="item" index="index" collection="list" open="(" separator="," close=")">
+			#{item}
+		</foreach>
+	</delete>
+	<select id="selectImgInfByName" resultType="java.lang.Integer">
+		select count(*) from img_info where img_url = #{imgUrl}
+	</select>
+ </mapper>
